@@ -1,0 +1,13 @@
+{
+  "name": "Raw-only (не сопоставлен)",
+  "input": {
+    "report_id": null,
+    "axes": {},
+    "buttons": [],
+    "dpad": null
+  },
+  "output": {
+    "lightbar": null,
+    "rumble": null
+  }
+}

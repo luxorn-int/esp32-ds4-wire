@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Локальный Чат</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #e5ddd5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { background: white; width: 100%; max-width: 450px; height: 100vh; max-height: 700px; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 10px; overflow: hidden; }
+
+        /* Экран входа */
+        #login-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; padding: 30px; background: #fff; }
+        #login-screen h2 { color: #075e54; margin-bottom: 20px; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; font-size: 16px; }
+        button { background: #128c7e; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #075e54; }
+
+        /* Экран чата */
+        #chat-screen { display: none; flex-direction: column; height: 100%; }
+        .header { background: #075e54; color: white; padding: 15px; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between; }
+        .header .room { font-size: 14px; opacity: 0.8; font-weight: normal; margin-top: 2px; }
+
+        .messages { flex: 1; padding: 15px; overflow-y: auto; background: url('https://githubusercontent.com'); display: flex; flex-direction: column; gap: 8px; }
+        .msg { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 15px; position: relative; word-wrap: break-word; }
+        .msg.in { background: white; align-self: flex-start; border-top-left-radius: 0; }
+        .msg.out { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
+        .msg .meta { font-size: 11px; color: #777; font-weight: bold; margin-bottom: 3px; }
+        .msg.system { background: rgba(0,0,0,0.05); align-self: center; font-size: 12px; color: #555; text-align: center; border-radius: 5px; max-width: 90%; }
+
+        .input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 10px; align-items: center; }
+        .input-area input { margin: 0; background: white; }
+        .input-area button { width: auto; margin: 0; padding: 12px 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- ЭКРАН ВХОДА -->
+    <div id="login-screen">
+        <h2>Вход в Секретный Чат</h2>
+        <input type="text" id="username" placeholder="Ваше имя / Никнейм" maxlength="15">
+        <input type="text" id="session-key" placeholder="Ключ сессии (комнаты)" maxlength="10">
+        <button onclick="connectToChat()">Войти в чат</button>
+    </div>
+
+    <!-- ЭКРАН ЧАТА -->
+    <div id="chat-screen">
+        <div class="header">
+            <div>
+                <div id="chat-title">Чат</div>
+                <div class="room" id="chat-room-info">Комната: не указана</div>
+            </div>
+            <button style="width:auto; margin:0; padding:5px 10px; font-size:12px; background:#444;" onclick="location.reload()">Выйти</button>
+        </div>
+        <div class="messages" id="msg-container"></div>
+        <div class="input-area">
+            <input type="text" id="msg-input" placeholder="Введите сообщение..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let ws;
+    let myName = "";
+    let roomKey = "";
+
+    function connectToChat() {
+        myName = document.getElementById('username').value.trim();
+        roomKey = document.getElementById('session-key').value.trim();
+
+        if (!myName || !roomKey) {
+            alert("Пожалуйста, заполните оба поля!");
+            return;
+        }
+
+        // Подключаемся к WebSocket серверу на ESP32 (IP по умолчанию в режиме SoftAP: 192.168.4.1)
+        ws = new WebSocket("ws://192.168.4.1/ws");
+
+        ws.onopen = () => {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('chat-screen').style.display = 'flex';
+            document.getElementById('chat-title').innerText = myName;
+            document.getElementById('chat-room-info').innerText = "Ключ сессии: " + roomKey;
+
+            // Первое системное сообщение: авторизация на ESP32 (формат: КЛЮЧ:НИК:Сообщение)
+            ws.send(roomKey + ":" + myName + ":__JOIN__");
+        };
+
+        ws.onmessage = (event) => {
+            parseAndDisplayMessage(event.data);
+        };
+
+        ws.onclose = () => {
+            alert("Соединение с ESP32 потеряно!");
+            location.reload();
+        };
+
+        ws.onerror = (err) => {
+            console.error("Ошибка WS:", err);
+        };
+    }
+
+    function parseAndDisplayMessage(data) {
+        // Формат от сервера: НИК:СООБЩЕНИЕ
+        const separatorIdx = data.indexOf(':');
+        if (separatorIdx === -1) return;
+
+        const sender = data.substring(0, separatorIdx);
+        const text = data.substring(separatorIdx + 1);
+
+        const container = document.getElementById('msg-container');
+        const msgDiv = document.createElement('div');
+
+        if (text === "__JOIN__") {
+            msgDiv.className = "msg system";
+            msgDiv.innerText = `Пользователь ${sender} вошел в чат`;
+        } else {
+            const isMe = (sender === myName);
+            msgDiv.className = `msg ${isMe ? 'out' : 'in'}`;
+
+            const meta = document.createElement('div');
+            meta.className = "meta";
+            meta.innerText = sender;
+
+            const txt = document.createElement('div');
+            txt.innerText = text;
+
+            msgDiv.appendChild(meta);
+            msgDiv.appendChild(txt);
+        }
+
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight; // Автопрокрутка вниз
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('msg-input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Отправляем пакет на ESP32 в формате КЛЮЧ:НИК:ТЕКСТ
+        ws.send(roomKey + ":" + myName + ":" + text);
+        input.value = "";
+    }
+
+    function handleKeyPress(e) {
+        if (e.key === 'Enter') sendMessage();
+    }
+</script>
+</body>
+</html>

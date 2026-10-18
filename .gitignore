@@ -1,0 +1,45 @@
+# --- PlatformIO ---
+.pio/
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+splint.rc
+
+# --- CLion и IDE от JetBrains ---
+.idea/
+cmake-build-*/
+*.iws
+*.iml
+*.ipr
+
+# --- ESP-IDF & CMake Build Artifacts ---
+**/build/
+build/
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile
+cmake_install.cmake
+install_local_manifest.txt
+compile_commands.json
+sdkconfig.old
+
+# Оставьте эту строку, если хотите, чтобы настройки sdkconfig
+# были у каждого свои (или если там есть приватные пароли Wi-Fi).
+# Удалите/закомментируйте её, если хотите делить настройки с командой.
+sdkconfig
+
+# --- Менеджер компонентов ESP-IDF ---
+managed_components/
+dependencies.lock
+
+# --- Общие временные файлы компиляции ---
+*.o
+*.d
+*.elf
+*.bin
+*.map
+.DS_Store
+__pycache__/
+*.pyc

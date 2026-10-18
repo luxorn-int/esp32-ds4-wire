@@ -1,0 +1,59 @@
+{
+  "name": "DualShock 4 Bluetooth (full report)",
+  "input": {
+    "report_id": 17,
+    "axes": {
+      "lx": {"offset": 2, "min": 0, "max": 255},
+      "ly": {"offset": 3, "min": 0, "max": 255},
+      "rx": {"offset": 4, "min": 0, "max": 255},
+      "ry": {"offset": 5, "min": 0, "max": 255},
+      "lt": {"offset": 9, "min": 0, "max": 255},
+      "rt": {"offset": 10, "min": 0, "max": 255}
+    },
+    "buttons": [
+      {"name": "square", "offset": 6, "mask": 16},
+      {"name": "cross", "offset": 6, "mask": 32},
+      {"name": "circle", "offset": 6, "mask": 64},
+      {"name": "triangle", "offset": 6, "mask": 128},
+      {"name": "l1", "offset": 7, "mask": 1},
+      {"name": "r1", "offset": 7, "mask": 2},
+      {"name": "share", "offset": 7, "mask": 16},
+      {"name": "options", "offset": 7, "mask": 32},
+      {"name": "l3", "offset": 7, "mask": 64},
+      {"name": "r3", "offset": 7, "mask": 128},
+      {"name": "ps", "offset": 8, "mask": 1},
+      {"name": "touchpad", "offset": 8, "mask": 2}
+    ],
+    "dpad": {
+      "offset": 6,
+      "mask": 15,
+      "values": {
+        "0": ["dpad_up"],
+        "1": ["dpad_up", "dpad_right"],
+        "2": ["dpad_right"],
+        "3": ["dpad_down", "dpad_right"],
+        "4": ["dpad_down"],
+        "5": ["dpad_down", "dpad_left"],
+        "6": ["dpad_left"],
+        "7": ["dpad_up", "dpad_left"],
+        "8": []
+      }
+    }
+  },
+  "output": {
+    "lightbar": {
+      "map_index": 0,
+      "report_id": 17,
+      "template_hex": "c000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "offsets": {"r": 7, "g": 8, "b": 9},
+      "crc32": {"offset": 73, "seed": 162, "include_report_id": true}
+    },
+    "rumble": {
+      "map_index": 0,
+      "report_id": 17,
+      "template_hex": "c000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "offsets": {"strong": 5, "weak": 6},
+      "crc32": {"offset": 73, "seed": 162, "include_report_id": true}
+    }
+  }
+}
